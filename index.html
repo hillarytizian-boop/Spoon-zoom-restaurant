@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spoon Zoom Restaurante | Order Online</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial, sans-serif;}
+body{background:#fdf8f4;color:#333;}
+header{background:#7a1f1f;color:#fff;padding:20px;text-align:center;}
+.hero{background:#a83232;color:#fff;padding:60px 20px;text-align:center;}
+.hero button{padding:12px 20px;margin-top:15px;border:none;background:#fff;color:#7a1f1f;font-weight:bold;cursor:pointer;border-radius:5px;}
+.container{padding:20px;}
+h2{margin-bottom:15px;}
+
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;}
+.card{background:#fff;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,0.1);padding:15px;text-align:center;}
+.card img{width:100%;height:150px;object-fit:cover;border-radius:8px;}
+.card button{background:#7a1f1f;color:#fff;border:none;padding:8px 12px;border-radius:5px;cursor:pointer;margin-top:8px;}
+
+.cart-btn{position:fixed;top:20px;right:20px;background:#ffcc00;padding:10px 15px;border-radius:20px;cursor:pointer;font-weight:bold;z-index:1000;}
+
+.cart{position:fixed;right:-400px;top:0;width:360px;height:100%;background:#fff;box-shadow:-3px 0 10px rgba(0,0,0,0.2);padding:20px;transition:0.3s;overflow-y:auto;z-index:999;}
+.cart.active{right:0;}
+
+.cart-item{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.qty-controls button{padding:2px 6px;margin:0 3px;}
+.remove-btn{background:red;color:#fff;border:none;padding:3px 6px;cursor:pointer;}
+
+input,select,textarea{width:100%;padding:8px;margin:6px 0;}
+button.primary{background:#7a1f1f;color:#fff;padding:10px;border:none;border-radius:5px;width:100%;cursor:pointer;}
+.whatsapp{display:block;text-align:center;margin-top:10px;background:#25D366;color:#fff;padding:10px;border-radius:5px;text-decoration:none;}
+
+footer{background:#7a1f1f;color:#fff;text-align:center;padding:15px;margin-top:40px;}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Spoon Zoom Restaurante</h1>
+<p>December Building, Thika | 0720 861731</p>
+</header>
+
+<div class="hero">
+<h2>Taste the Flavor. Feel the Experience.</h2>
+<button onclick="scrollToMenu()">Order Now</button>
+</div>
+
+<div class="cart-btn" onclick="toggleCart()">Cart (<span id="cart-count">0</span>)</div>
+
+<div class="container" id="menu">
+<h2>Our Menu</h2>
+<div class="menu-grid">
+
+<div class="card">
+<img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87">
+<h3>Classic Milkshake</h3>
+<p>KES 350</p>
+<button onclick="addToCart('Classic Milkshake',350)">Add to Cart</button>
+</div>
+
+<div class="card">
+<img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
+<h3>Beef Burger</h3>
+<p>KES 500</p>
+<button onclick="addToCart('Beef Burger',500)">Add to Cart</button>
+</div>
+
+<div class="card">
+<img src="https://images.unsplash.com/photo-1585238342028-4c6c90a3a8b6">
+<h3>French Fries</h3>
+<p>KES 250</p>
+<button onclick="addToCart('French Fries',250)">Add to Cart</button>
+</div>
+
+<div class="card">
+<img src="https://images.unsplash.com/photo-1542444459-db63c6a7c0c0">
+<h3>Fresh Lemonade</h3>
+<p>KES 300</p>
+<button onclick="addToCart('Fresh Lemonade',300)">Add to Cart</button>
+</div>
+
+</div>
+</div>
+
+<div class="cart" id="cart">
+<h2>Your Cart</h2>
+<div id="cart-items"></div>
+<h3>Total: KES <span id="total">0</span></h3>
+
+<h3>Checkout</h3>
+<input type="text" id="name" placeholder="Full Name">
+<input type="tel" id="phone" placeholder="Phone Number">
+<textarea id="address" placeholder="Delivery Address"></textarea>
+
+<select id="delivery">
+<option value="Pickup">Pickup</option>
+<option value="Delivery">Delivery</option>
+</select>
+
+<select id="payment" onchange="showMpesaInfo()">
+<option value="M-Pesa">M-Pesa</option>
+<option value="Cash on Delivery">Cash on Delivery</option>
+</select>
+
+<p id="mpesaInfo" style="display:none;color:green;">
+Send payment to Till: 123456<br>
+After payment click Place Order.
+</p>
+
+<button class="primary" onclick="checkout()">Place Order</button>
+<a id="whatsappLink" class="whatsapp" target="_blank" style="display:none;">Confirm via WhatsApp</a>
+
+</div>
+
+<footer>
+<p>Open Daily - Closes 10PM</p>
+<p>&copy; 2026 Spoon Zoom Restaurante</p>
+</footer>
+
+<script>
+let cart = [];
+
+function scrollToMenu(){
+document.getElementById("menu").scrollIntoView({behavior:"smooth"});
+}
+
+function toggleCart(){
+document.getElementById("cart").classList.toggle("active");
+}
+
+function addToCart(name,price){
+let existing = cart.find(item => item.name === name);
+if(existing){
+existing.qty += 1;
+}else{
+cart.push({name,price,qty:1});
+}
+updateCart();
+}
+
+function updateCart(){
+let cartItems=document.getElementById("cart-items");
+let total=0;
+cartItems.innerHTML="";
+cart.forEach((item,index)=>{
+total+=item.price*item.qty;
+cartItems.innerHTML+=`
+<div class="cart-item">
+<div>
+<strong>${item.name}</strong><br>
+KES ${item.price}
+</div>
+<div class="qty-controls">
+<button onclick="changeQty(${index},-1)">-</button>
+${item.qty}
+<button onclick="changeQty(${index},1)">+</button>
+<button class="remove-btn" onclick="removeItem(${index})">X</button>
+</div>
+</div>`;
+});
+document.getElementById("total").innerText=total;
+document.getElementById("cart-count").innerText=cart.length;
+}
+
+function changeQty(index,change){
+cart[index].qty+=change;
+if(cart[index].qty<=0){
+cart.splice(index,1);
+}
+updateCart();
+}
+
+function removeItem(index){
+cart.splice(index,1);
+updateCart();
+}
+
+function showMpesaInfo(){
+let payment=document.getElementById("payment").value;
+document.getElementById("mpesaInfo").style.display =
+payment==="M-Pesa" ? "block" : "none";
+}
+
+function checkout(){
+if(cart.length===0){
+alert("Cart is empty.");
+return;
+}
+
+let name=document.getElementById("name").value.trim();
+let phone=document.getElementById("phone").value.trim();
+let address=document.getElementById("address").value.trim();
+let delivery=document.getElementById("delivery").value;
+let payment=document.getElementById("payment").value;
+let total=document.getElementById("total").innerText;
+
+if(!name || !phone){
+alert("Please fill name and phone number.");
+return;
+}
+
+let message=`Hello Spoon Zoom,%0AOrder Details:%0A`;
+cart.forEach(item=>{
+message+=`${item.name} x${item.qty} - KES ${item.price*item.qty}%0A`;
+});
+message+=`Total: KES ${total}%0AName: ${name}%0APhone: ${phone}%0A${delivery}%0APayment: ${payment}%0AAddress: ${address}`;
+
+let whatsappURL=`https://wa.me/254720861731?text=${message}`;
+
+document.getElementById("whatsappLink").href=whatsappURL;
+document.getElementById("whatsappLink").style.display="block";
+
+alert("Order ready. Click WhatsApp to confirm.");
+
+cart=[];
+updateCart();
+}
+</script>
+
+</body>
+</html>
